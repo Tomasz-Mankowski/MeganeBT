@@ -32,8 +32,7 @@ void USART_CDC()
 	LL_USART_Init(USART1, &USART_InitStruct);
 
 	LL_USART_ConfigAsyncMode(USART1);
-
-	LL_USART_DisableIT_ERROR(USART1);
+	LL_USART_DisableOverrunDetect(USART1);
 
 	NVIC_SetPriority(USART1_IRQn, 1);
 	NVIC_EnableIRQ(USART1_IRQn);
@@ -55,6 +54,7 @@ void USART_RN52()
 	LL_USART_Init(USART2, &USART_InitStruct);
 
 	LL_USART_ConfigAsyncMode(USART2);
+	LL_USART_DisableOverrunDetect(USART2);
 
 	NVIC_SetPriority(USART2_IRQn, 2);
 	NVIC_EnableIRQ(USART2_IRQn);
@@ -91,7 +91,7 @@ uint8_t USART_CDC_SendPacket(uint8_t *data, uint8_t length, uint8_t retries)
 			}
 			USART_CDC_TX_buffer[3+length] = USART_CDC_checksum(USART_CDC_TX_buffer, length+3);
 
-			USART_CDC_TxLocked = 1;
+			LL_USART_DisableIT_RXNE(USART1);
 
 			for(int i = 0; i<length+4; i++)
 			{
@@ -100,7 +100,7 @@ uint8_t USART_CDC_SendPacket(uint8_t *data, uint8_t length, uint8_t retries)
 				while(!LL_USART_IsActiveFlag_TC(USART1));
 			}
 
-			USART_CDC_TxLocked = 0;
+			LL_USART_EnableIT_RXNE(USART1);
 
 			USART_CDC_Wait = WAITING;
 			LL_TIM_SetCounter(TIM2, 0);
@@ -146,12 +146,10 @@ void USART1_IRQHandler(void)
 			{
 				if(USART_CDC_RX_buffer[USART_CDC_RX_Ptr-1] == USART_CDC_checksum(USART_CDC_RX_buffer, USART_CDC_RX_buffer[2]+3))
 				{
-					if(!USART_CDC_TxLocked)
-					{
-						while(!LL_USART_IsActiveFlag_TXE(USART1));
-						LL_USART_TransmitData8(USART1, 0xC5); // confirm packet
-						while(!LL_USART_IsActiveFlag_TC(USART1));
-					}
+
+					while(!LL_USART_IsActiveFlag_TXE(USART1));
+					LL_USART_TransmitData8(USART1, 0xC5); // confirm packet
+					while(!LL_USART_IsActiveFlag_TC(USART1));
 
 					if(USART_CDC_RX_buffer[2] == 7 && USART_CDC_RX_buffer[3] == 0x31)
 					{
@@ -241,7 +239,9 @@ void USART_RN52_Send(uint8_t *data, uint8_t length)
 static volatile uint8_t USART_RN52_RX_buffer[100];
 static volatile uint8_t USART_RN52_RX_Ptr = 0;
 
-//const uint8_t RN52_Setup[7] = "S%,1026";
+const uint8_t RN52_Setup1[7] = "SP,1236";
+
+volatile uint32_t flags;
 
 void USART2_IRQHandler(void)
 {
@@ -259,6 +259,32 @@ void USART2_IRQHandler(void)
 					if(USART_RN52_RX_buffer[0] == 'C' && USART_RN52_RX_buffer[1] == 'M' && USART_RN52_RX_buffer[2] == 'D')
 					{
 						USART_RN52_CMD_Mode = RN52_CMD_MODE;
+						//USART_RN52_Send("D", 1);
+
+
+						//UNCOMMENT TO RUN RN52 Configuration
+						//DO ONLY ONCE, THEN REPROGRAM FLASH FOR NORMAL OPERATION
+
+						/*LL_TIM_DisableIT_UPDATE(TIM3);
+						USART_RN52_Send("S|,02", 5); //S/PDIF output
+						for(int i=0; i<0xFFFF; i++);
+						USART_RN52_Send("S-,Megane", 9); //module name
+						for(int i=0; i<0xFFFF; i++);
+						USART_RN52_Send("SA,04", 5); // pin required
+						for(int i=0; i<0xFFFF; i++);
+						USART_RN52_Send("SC,200428", 9); //CoD class
+						for(int i=0; i<0xFFFF; i++);
+						USART_RN52_Send("SD,04", 5); //A2DP detection class
+						for(int i=0; i<0xFFFF; i++);
+						USART_RN52_Send("SK,04", 5); //A2DP connection class
+						for(int i=0; i<0xFFFF; i++);
+						USART_RN52_Send("SN,Megane", 9); //serial name
+						for(int i=0; i<0xFFFF; i++);
+						USART_RN52_Send("SP,1234", 7); //set pin
+						for(int i=0; i<0xFFFF; i++);
+						USART_RN52_Send("S%,1026", 7); //extended futures, auto-discover, auto-reconnect, mute up/down vol tones
+						for(int i=0; i<0xFFFF; i++);
+						LL_TIM_EnableIT_UPDATE(TIM3);*/
 					}
 
 					if(USART_RN52_RX_buffer[0] == 'E' && USART_RN52_RX_buffer[1] == 'N' && USART_RN52_RX_buffer[2] == 'D')
