@@ -33,6 +33,8 @@ void USART_CDC()
 
 	LL_USART_ConfigAsyncMode(USART1);
 
+	LL_USART_DisableIT_ERROR(USART1);
+
 	NVIC_SetPriority(USART1_IRQn, 1);
 	NVIC_EnableIRQ(USART1_IRQn);
 
@@ -89,7 +91,6 @@ uint8_t USART_CDC_SendPacket(uint8_t *data, uint8_t length, uint8_t retries)
 			}
 			USART_CDC_TX_buffer[3+length] = USART_CDC_checksum(USART_CDC_TX_buffer, length+3);
 
-			while(USART_CDC_TxLocked);
 			USART_CDC_TxLocked = 1;
 
 			for(int i = 0; i<length+4; i++)
@@ -123,6 +124,7 @@ static volatile uint8_t USART_CDC_RX_Ptr = 0;
 
 void USART1_IRQHandler(void)
 {
+
 	while(LL_USART_IsActiveFlag_RXNE(USART1))
 	{
 		USART_CDC_RX_buffer[USART_CDC_RX_Ptr] = LL_USART_ReceiveData8(USART1);
@@ -144,12 +146,12 @@ void USART1_IRQHandler(void)
 			{
 				if(USART_CDC_RX_buffer[USART_CDC_RX_Ptr-1] == USART_CDC_checksum(USART_CDC_RX_buffer, USART_CDC_RX_buffer[2]+3))
 				{
-					while(USART_CDC_TxLocked);
-					USART_CDC_TxLocked = 1;
-
-					while(!LL_USART_IsActiveFlag_TXE(USART1));
-					LL_USART_TransmitData8(USART1, 0xC5); // confirm packet
-					while(!LL_USART_IsActiveFlag_TC(USART1));
+					if(!USART_CDC_TxLocked)
+					{
+						while(!LL_USART_IsActiveFlag_TXE(USART1));
+						LL_USART_TransmitData8(USART1, 0xC5); // confirm packet
+						while(!LL_USART_IsActiveFlag_TC(USART1));
+					}
 
 					if(USART_CDC_RX_buffer[2] == 7 && USART_CDC_RX_buffer[3] == 0x31)
 					{
@@ -163,7 +165,7 @@ void USART1_IRQHandler(void)
 							CDC_CurrentState = RECEIVED_PLAY;
 						}
 
-						if(USART_CDC_RX_buffer[3] == 0x02)
+						if(USART_CDC_RX_buffer[3] == 0x1C)
 						{
 							CDC_CurrentState = RECEIVED_PAUSE;
 						}
@@ -204,8 +206,6 @@ void USART1_IRQHandler(void)
 							CDC_CurrentState = RECEIVED_PREV;
 						}
 					}
-
-					USART_CDC_TxLocked = 0;
 				}
 				USART_CDC_RX_Ptr = 0;
 			}else if(USART_CDC_RX_Ptr > USART_CDC_RX_buffer[2] + 4) //if received data to long, drop transmission
@@ -238,11 +238,10 @@ void USART_RN52_Send(uint8_t *data, uint8_t length)
 	}
 }
 
-static volatile uint8_t USART_RN52_RX_buffer[32];
+static volatile uint8_t USART_RN52_RX_buffer[100];
 static volatile uint8_t USART_RN52_RX_Ptr = 0;
 
-const uint8_t RN52_Reconnect[1] = "B";
-const uint8_t RN52_Discoverable[3] = "@,1";
+//const uint8_t RN52_Setup[7] = "S%,1026";
 
 void USART2_IRQHandler(void)
 {
@@ -260,8 +259,6 @@ void USART2_IRQHandler(void)
 					if(USART_RN52_RX_buffer[0] == 'C' && USART_RN52_RX_buffer[1] == 'M' && USART_RN52_RX_buffer[2] == 'D')
 					{
 						USART_RN52_CMD_Mode = RN52_CMD_MODE;
-						USART_RN52_Send(RN52_Discoverable, 3);
-						USART_RN52_Send(RN52_Reconnect, 1);
 					}
 
 					if(USART_RN52_RX_buffer[0] == 'E' && USART_RN52_RX_buffer[1] == 'N' && USART_RN52_RX_buffer[2] == 'D')
@@ -270,11 +267,57 @@ void USART2_IRQHandler(void)
 					}
 				}
 
+				if(USART_RN52_RX_Ptr == 6) //Q status
+				{
+					if(USART_RN52_RX_buffer[3] >= 48 && USART_RN52_RX_buffer[3] <= 57) // if number 0-9
+					{
+						USART_RN52_RX_buffer[3] -= 48; // set to range 0-9
+					}else if(USART_RN52_RX_buffer[3] >= 65 && USART_RN52_RX_buffer[3] <= 70) // if letter A-F
+					{
+						USART_RN52_RX_buffer[3] -= 55; // set to range 10-16
+					}
+
+					uint8_t RN_Status = USART_RN52_RX_buffer[3] & 0x0F; //extract bits 0-3
+
+					if(RN_Status >= 0 && RN_Status <= 2)
+					{
+						RN52_State = RN52_State_NotConnected;
+					}else if(RN_Status == 3)
+					{
+						RN52_State = RN52_State_Paused;
+					}else if(RN_Status == 13)
+					{
+						RN52_State = RN52_State_Playing;
+					}
+				}
+
+				if(USART_RN52_RX_Ptr > 9) //Title info
+				{
+					if(USART_RN52_RX_buffer[5] == '=' && USART_RN52_RX_buffer[0] == 'T' && USART_RN52_RX_buffer[1] == 'i')
+					{
+						for(uint8_t i = 6; i < USART_RN52_RX_Ptr - 2; i++)
+						{
+							RN52_Title[i-6] = USART_RN52_RX_buffer[i];
+						}
+					}
+				}
+
+				if(USART_RN52_RX_Ptr > 10) //Artist info
+				{
+					if(USART_RN52_RX_buffer[6] == '=' && USART_RN52_RX_buffer[0] == 'A' && USART_RN52_RX_buffer[1] == 'r')
+					{
+						for(uint8_t i = 7; i < USART_RN52_RX_Ptr - 2; i++)
+						{
+							RN52_Artist[i-7] = USART_RN52_RX_buffer[i];
+						}
+					}
+				}
+
 				USART_RN52_RX_Ptr = 0;
 			}
 		}
 
-		if(USART_RN52_RX_Ptr == 32)
+		if(USART_RN52_RX_Ptr == 100)
 		{
 			USART_RN52_RX_Ptr = 0;
 		}

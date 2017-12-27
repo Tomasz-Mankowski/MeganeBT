@@ -24,11 +24,11 @@ const uint8_t CDC_Payload_ConfirmSongChange_2[2] = {0x21, 0x0A};
 const uint8_t CDC_Payload_ConfirmSongChange_3[2] = {0x21, 0x05};
 const uint8_t CDC_Payload_ConfirmSongChange_4[4] = {0x27, 0x15, 0x00, 0x22};
 
+static void CDC_ConfirmSongChange();
+
 const uint8_t RN52_NextTrack[3] = "AT+";
 const uint8_t RN52_PrevTrack[3] = "AT-";
 const uint8_t RN52_PlayPause[2] = "AP";
-
-static void CDC_ConfirmSongChange();
 
 int main(void)
 {
@@ -39,6 +39,16 @@ int main(void)
 	CDC_CurrentState = WAIT_BOOT;
 
 	USART_RN52_CMD_Mode = RN52_DATA_MODE;
+	RN52_State = RN52_State_NotConnected;
+	RN52_SilentTime = 0;
+
+
+	RN52_Title[0] = 'N';
+	RN52_Title[1] = '/';
+	RN52_Title[2] = 'A';
+	RN52_Artist[0] = 'N';
+	RN52_Artist[1] = '/';
+	RN52_Artist[2] = 'A';
 
 	SystemClock_Config();
 
@@ -72,59 +82,83 @@ int main(void)
 
 			case CONFIRM_HU_VERSION:
 				USART_CDC_SendPacket(CDC_Payload_ConfirmHuVersion, 2, 1);
-				LL_TIM_EnableCounter(TIM3); // start cyclic operation
 				CDC_CurrentState = OPERATE_STANDBY;
 				break;
 
 			case RECEIVED_PLAY:
+				LL_TIM_DisableCounter(TIM3);
+				if(RN52_State == RN52_State_Paused)
+				{
+					RN52_SilentTime = 2;
+					RN52_State = RN52_State_Playing;
+					USART_RN52_Send(RN52_PlayPause, 2);
+				}
 				USART_CDC_SendPacket(CDC_Payload_ConfirmPlay, 2, 1);
 				CDC_CurrentState = OPERATE_PREPARE_PLAY;
 				break;
 
 			case RECEIVED_PAUSE:
+				LL_TIM_DisableCounter(TIM3);
+				if(RN52_State == RN52_State_Playing)
+				{
+					RN52_SilentTime = 6;
+					RN52_State = RN52_State_Paused;
+					USART_RN52_Send(RN52_PlayPause, 2);
+				}
 				USART_CDC_SendPacket(CDC_Payload_ConfirmPause, 2, 1);
 				CDC_CurrentState = OPERATE_PAUSED;
 				break;
 
 			case RECEIVED_CD_CHANGE:
-				CDC_ConfirmSongChange();
+				LL_TIM_DisableCounter(TIM3);
 				CDC_CurrentState = OPERATE_PREPARE_PLAY;
+				CDC_ConfirmSongChange();
 				break;
 
 			case RECEIVED_NEXT:
-				CDC_ConfirmSongChange();
+				LL_TIM_DisableCounter(TIM3);
 				USART_RN52_Send(RN52_NextTrack, 3);
 				CDC_CurrentState = OPERATE_PREPARE_PLAY;
+				CDC_ConfirmSongChange();
 				break;
 
 			case RECEIVED_PREV:
-				CDC_ConfirmSongChange();
+				LL_TIM_DisableCounter(TIM3);
 				USART_RN52_Send(RN52_PrevTrack, 3);
 				CDC_CurrentState = OPERATE_PREPARE_PLAY;
+				CDC_ConfirmSongChange();
 				break;
 
 			case RECEIVED_STANDBY:
+				LL_TIM_DisableCounter(TIM3);
+				if(RN52_State == RN52_State_Playing)
+				{
+					RN52_SilentTime = 6;
+					RN52_State = RN52_State_Paused;
+					USART_RN52_Send(RN52_PlayPause, 2);
+				}
 				USART_CDC_SendPacket(CDC_Payload_ConfirmStandby, 2, 1);
 				CDC_CurrentState = OPERATE_STANDBY;
 				break;
 
 			case OPERATE_PREPARE_PLAY:
+				LL_TIM_EnableCounter(TIM3); // start cyclic operation
 				CDC_CurrentState = OPERATE_PLAYING;
 				break;
 
 			case OPERATE_PAUSED:
 			case OPERATE_STANDBY:
 			case OPERATE_PLAYING:
+				LL_TIM_EnableCounter(TIM3); // start cyclic operation
 				break;
 		}
 	}
 }
 
-static void CDC_ConfirmSongChange()
+void CDC_ConfirmSongChange()
 {
 	USART_CDC_SendPacket(CDC_Payload_ConfirmSongChange_1, 4, 1);
 	USART_CDC_SendPacket(CDC_Payload_ConfirmSongChange_2, 2, 1);
-	for(int i=0; i<0xFFF; i++);
 	USART_CDC_SendPacket(CDC_Payload_ConfirmSongChange_3, 2, 1);
 	USART_CDC_SendPacket(CDC_Payload_ConfirmSongChange_4, 4, 1);
 	USART_CDC_PlaySequence = 0;

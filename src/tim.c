@@ -72,6 +72,8 @@ const uint8_t CDC_Payload_OperatePreperePlay[6] = {0x20, 0x05, 0x03, 0x09, 0x15,
 const uint8_t CDC_Payload_OperatePaused[6] = {0x20, 0x03, 0x03, 0x09, 0x15, 0x01};
 uint8_t CDC_Payload_OperatePlaying[11] = {0x47, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
 
+//const uint8_t RN52_PlayPause[2] = "AP";
+
 void TIM3_IRQHandler()
 {
 	if(LL_TIM_IsActiveFlag_UPDATE(TIM3))
@@ -79,25 +81,46 @@ void TIM3_IRQHandler()
 		switch(CDC_CurrentState)
 		{
 			case OPERATE_STANDBY:
-				USART_CDC_SendPacket(CDC_Payload_OperateStandby, 6, 5);
+				USART_CDC_SendPacket(CDC_Payload_OperateStandby, 6, 1);
 				break;
 
 			case OPERATE_PREPARE_PLAY:
-				USART_CDC_SendPacket(CDC_Payload_OperatePreperePlay, 6, 5);
+				USART_CDC_SendPacket(CDC_Payload_OperatePreperePlay, 6, 1);
 				break;
 
 			case OPERATE_PLAYING:
 				CDC_Payload_OperatePlaying[9] = USART_CDC_PlaySequence;
-				USART_CDC_SendPacket(CDC_Payload_OperatePlaying, 11, 5);
+				USART_CDC_SendPacket(CDC_Payload_OperatePlaying, 11, 1);
 				USART_CDC_PlaySequence++;
 				break;
 
 			case OPERATE_PAUSED:
-				USART_CDC_SendPacket(CDC_Payload_OperatePaused, 6, 5);
+				USART_CDC_SendPacket(CDC_Payload_OperatePaused, 6, 1);
 				break;
 
 			default:
 				break;
+		}
+
+		if(RN52_SilentTime > 0)
+		{
+			RN52_SilentTime--;
+		}else
+		{
+			/*if(CDC_CurrentState == OPERATE_PLAYING && RN52_State == RN52_State_Paused)
+			{
+				RN52_SilentTime = 1;
+				RN52_State = RN52_State_Playing;
+				USART_RN52_Send(RN52_PlayPause, 2);
+			}else if((CDC_CurrentState == OPERATE_PAUSED || CDC_CurrentState == OPERATE_STANDBY) && RN52_State == RN52_State_Playing)
+			{
+				RN52_SilentTime = 6;
+				RN52_State = RN52_State_Paused;
+				USART_RN52_Send(RN52_PlayPause, 2);
+			}else
+			{*/
+				USART_RN52_Send("Q", 1);
+			/*}*/
 		}
 
 		LL_TIM_ClearFlag_UPDATE(TIM3);

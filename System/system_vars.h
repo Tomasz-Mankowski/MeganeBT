@@ -65,4 +65,16 @@ typedef enum{
 
 volatile RN52_Mode USART_RN52_CMD_Mode;
 
+typedef enum{
+	RN52_State_NotConnected,
+	RN52_State_Paused,
+	RN52_State_Playing
+}RN52_State_TypeDef;
+
+volatile RN52_State_TypeDef RN52_State;
+
+volatile uint8_t RN52_SilentTime;
+volatile uint8_t RN52_Title[82];
+volatile uint8_t RN52_Artist[82];
+
 #endif /* SYSTEM_VARS_H_ */
