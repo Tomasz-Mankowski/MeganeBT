@@ -50,11 +50,26 @@ int main(void)
 	RN52_Artist[1] = '/';
 	RN52_Artist[2] = 'A';
 
+	CAN_AFFA_State = CAN_AFFA_Disabled;
+	CAN_AFFA_isRefrNeeded = CAN_AFFA_Keep;
+	CAN_Sync = CAN_NotSynced;
+
+	CAN_AFFA_Text_Lenght = 9;
+	CAN_AFFA_Text[0] = 'T';
+	CAN_AFFA_Text[1] = 'e';
+	CAN_AFFA_Text[2] = 's';
+	CAN_AFFA_Text[3] = 't';
+
 	SystemClock_Config();
 
 	GPIO_Conf();
+
+	HAL_Init();
+	CAN_Conf();
+
 	USART_Conf();
 	TIM_Conf();
+
 
 	LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5);//RN52 CMD mode
 
@@ -116,6 +131,7 @@ int main(void)
 				break;
 
 			case RECEIVED_NEXT:
+				//AFFA_DisplayText("HELLO!", "HELLO!12");
 				LL_TIM_DisableCounter(TIM3);
 				USART_RN52_Send(RN52_NextTrack, 3);
 				CDC_CurrentState = OPERATE_PREPARE_PLAY;

@@ -8,6 +8,7 @@
 
 static void TIM_CDC_Timeout();
 static void TIM_CDC_FakePlay();
+static void TIM_CAN_AFFA();
 
 static LL_TIM_InitTypeDef TIM_InitStruct;
 
@@ -15,10 +16,12 @@ void TIM_Conf()
 {
 	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
 	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
-
+	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM14);
 
 	TIM_CDC_Timeout();
 	TIM_CDC_FakePlay();
+	TIM_CAN_AFFA();
+
 }
 
 static void TIM_CDC_Timeout()
@@ -29,7 +32,7 @@ static void TIM_CDC_Timeout()
 	TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
 	LL_TIM_Init(TIM2, &TIM_InitStruct);
 
-	NVIC_SetPriority(TIM2_IRQn, 0);
+	NVIC_SetPriority(TIM2_IRQn, 1);
 	NVIC_EnableIRQ(TIM2_IRQn);
 
 	LL_TIM_ClearFlag_UPDATE(TIM2);
@@ -46,7 +49,7 @@ void TIM_CDC_FakePlay()
 	TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
 	LL_TIM_Init(TIM3, &TIM_InitStruct);
 
-	NVIC_SetPriority(TIM3_IRQn, 2);
+	NVIC_SetPriority(TIM3_IRQn, 3);
 	NVIC_EnableIRQ(TIM3_IRQn);
 
 	LL_TIM_ClearFlag_UPDATE(TIM3);
@@ -54,6 +57,24 @@ void TIM_CDC_FakePlay()
 
 	LL_TIM_DisableCounter(TIM3);
 }
+
+void TIM_CAN_AFFA()
+{
+	TIM_InitStruct.Prescaler = 191; //Inc 250 000 Hz
+	TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
+	TIM_InitStruct.Autoreload = 2499; // Rel 2499 = 10 ms = 100 Hz
+	TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
+	LL_TIM_Init(TIM14, &TIM_InitStruct);
+
+	NVIC_SetPriority(TIM14_IRQn, 3);
+	NVIC_EnableIRQ(TIM14_IRQn);
+
+	LL_TIM_ClearFlag_UPDATE(TIM14);
+	LL_TIM_EnableIT_UPDATE(TIM14);
+
+	LL_TIM_EnableCounter(TIM14);
+}
+
 
 void TIM2_IRQHandler()
 {
@@ -105,22 +126,30 @@ void TIM3_IRQHandler()
 			RN52_SilentTime--;
 		}else
 		{
-			/*if(CDC_CurrentState == OPERATE_PLAYING && RN52_State == RN52_State_Paused)
-			{
-				RN52_SilentTime = 1;
-				RN52_State = RN52_State_Playing;
-				USART_RN52_Send(RN52_PlayPause, 2);
-			}else if((CDC_CurrentState == OPERATE_PAUSED || CDC_CurrentState == OPERATE_STANDBY) && RN52_State == RN52_State_Playing)
-			{
-				RN52_SilentTime = 6;
-				RN52_State = RN52_State_Paused;
-				USART_RN52_Send(RN52_PlayPause, 2);
-			}else
-			{*/
-				USART_RN52_Send("Q", 1);
-			/*}*/
+			USART_RN52_Send("Q", 1);
 		}
 
 		LL_TIM_ClearFlag_UPDATE(TIM3);
+	}
+}
+
+void TIM14_IRQHandler()
+{
+	if(LL_TIM_IsActiveFlag_UPDATE(TIM14))
+	{
+		if(CAN_AFFA_State == CAN_AFFA_Enabled && CAN_Sync == CAN_Synced)
+		{
+			if(CAN_AFFA_isRefrNeeded == CAN_AFFA_Refresh)
+			{
+
+				AFFA_DisplayText(RN52_Artist, RN52_Artist);
+
+				CAN_AFFA_isRefrNeeded = CAN_AFFA_Keep;
+			}
+		}
+
+		CAN_Sync = CAN_NotSynced;
+
+		LL_TIM_ClearFlag_UPDATE(TIM14);
 	}
 }

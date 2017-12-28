@@ -25,4 +25,10 @@
 		<nature>fr.ac6.mcu.ide.core.MCUProjectNature</nature>
 		<nature>fr.ac6.mcu.ide.core.MCUSingleCoreProjectNature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>copy_PARENT</name>
+			<value>$%7BPARENT-2-ECLIPSE_HOME%7D/Users/Tomek/STM32Cube/Repository/STM32Cube_FW_F0_V1.9.0/Projects/STM32072B_EVAL/Examples/CAN/CAN_Networking</value>
+		</variable>
+	</variableList>
 </projectDescription>

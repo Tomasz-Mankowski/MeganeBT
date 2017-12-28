@@ -77,4 +77,26 @@ volatile uint8_t RN52_SilentTime;
 volatile uint8_t RN52_Title[82];
 volatile uint8_t RN52_Artist[82];
 
+typedef enum{
+	CAN_AFFA_Disabled,
+	CAN_AFFA_Enabled
+}CAN_AFFA_State_TypeDef;
+
+typedef enum{
+	CAN_AFFA_Refresh,
+	CAN_AFFA_Keep
+}CAN_AFFA_isRefrNeeded_Typedef;
+
+typedef enum{
+	CAN_Synced,
+	CAN_NotSynced
+}CAN_Sync_Typedef;
+
+volatile CAN_AFFA_State_TypeDef CAN_AFFA_State;
+volatile CAN_AFFA_isRefrNeeded_Typedef CAN_AFFA_isRefrNeeded;
+volatile CAN_Sync_Typedef CAN_Sync;
+
+volatile uint8_t CAN_AFFA_Text[165];
+volatile uint8_t CAN_AFFA_Text_Lenght;
+
 #endif /* SYSTEM_VARS_H_ */

@@ -34,7 +34,7 @@ void USART_CDC()
 	LL_USART_ConfigAsyncMode(USART1);
 	LL_USART_DisableOverrunDetect(USART1);
 
-	NVIC_SetPriority(USART1_IRQn, 1);
+	NVIC_SetPriority(USART1_IRQn, 2);
 	NVIC_EnableIRQ(USART1_IRQn);
 
 	LL_USART_EnableIT_RXNE(USART1);
@@ -56,7 +56,7 @@ void USART_RN52()
 	LL_USART_ConfigAsyncMode(USART2);
 	LL_USART_DisableOverrunDetect(USART2);
 
-	NVIC_SetPriority(USART2_IRQn, 2);
+	NVIC_SetPriority(USART2_IRQn, 3);
 	NVIC_EnableIRQ(USART2_IRQn);
 
 	LL_USART_EnableIT_RXNE(USART2);
@@ -259,8 +259,6 @@ void USART2_IRQHandler(void)
 					if(USART_RN52_RX_buffer[0] == 'C' && USART_RN52_RX_buffer[1] == 'M' && USART_RN52_RX_buffer[2] == 'D')
 					{
 						USART_RN52_CMD_Mode = RN52_CMD_MODE;
-						//USART_RN52_Send("D", 1);
-
 
 						//UNCOMMENT TO RUN RN52 Configuration
 						//DO ONLY ONCE, THEN REPROGRAM FLASH FOR NORMAL OPERATION
@@ -336,6 +334,33 @@ void USART2_IRQHandler(void)
 						{
 							RN52_Artist[i-7] = USART_RN52_RX_buffer[i];
 						}
+
+						/*uint8_t DestPtr=0;
+						uint8_t SrcPtr=0;
+
+						while(RN52_Artist[SrcPtr] != '\n' || SrcPtr > 81)
+						{
+							CAN_AFFA_Text[DestPtr] = RN52_Artist[SrcPtr];
+							DestPtr++;
+							SrcPtr++;
+						}
+
+						CAN_AFFA_Text[DestPtr] = ' '; DestPtr++;
+						CAN_AFFA_Text[DestPtr] = '-'; DestPtr++;
+						CAN_AFFA_Text[DestPtr] = ' '; DestPtr++;
+
+						SrcPtr = 0;
+
+						while(RN52_Title[SrcPtr] != '\n' || SrcPtr > 81)
+						{
+							CAN_AFFA_Text[DestPtr] = RN52_Artist[SrcPtr];
+							DestPtr++;
+							SrcPtr++;
+						}
+
+						CAN_AFFA_Text_Lenght = DestPtr+1;*/
+
+						CAN_AFFA_isRefrNeeded = CAN_AFFA_Refresh;
 					}
 				}
 

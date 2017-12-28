@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "usart.h"
 #include "tim.h"
+#include "can.h"
 
 static void SystemClock_Config(void);
 
