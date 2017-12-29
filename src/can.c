@@ -160,18 +160,33 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef *CanHandle)
 				CAN_TextLong[11] = CanHandle->pRxMsg->Data[4];
 
 				CAN_TextShort[8] = 0;
-				CAN_TextShort[12] = 0;
+				CAN_TextLong[12] = 0;
 
-				if(strcmp(CAN_TextShort, "TR 01 CD") == 0 && strcmp(CAN_TextLong, "CD 1 TR 01  ") == 0 )
+				if(strcmp(CAN_TextLong, "CD 1 TR 01  ") == 0 )
 				{
-					LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_1);
+					if(strcmp(CAN_TextShort, "TR 01 CD") == 0)
+					{
+						CAN_AFFA_Display_Shift = 0;
+						CAN_AFFA_State = CAN_AFFA_Enabled;
+						CAN_AFFA_isRefrNeeded = CAN_AFFA_Refresh;
+					}else
+					{
+						CAN_AFFA_State = CAN_AFFA_Disabled;
+					}
+				}else
+				{
+					CAN_AFFA_State = CAN_AFFA_Disabled;
+				}
 
+				/*if(strcmp(CAN_TextShort, "TR 01 CD") == 0) && strcmp(CAN_TextLong, "CD 1 TR 01  ") == 0 ) // problems?! WHY?! Needs attention
+				{
+					CAN_AFFA_Display_Shift = 0;
 					CAN_AFFA_State = CAN_AFFA_Enabled;
 					CAN_AFFA_isRefrNeeded = CAN_AFFA_Refresh;
 				}else
 				{
 					CAN_AFFA_State = CAN_AFFA_Disabled;
-				}
+				}*/
 			}
 		}
 

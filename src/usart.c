@@ -239,10 +239,6 @@ void USART_RN52_Send(uint8_t *data, uint8_t length)
 static volatile uint8_t USART_RN52_RX_buffer[100];
 static volatile uint8_t USART_RN52_RX_Ptr = 0;
 
-const uint8_t RN52_Setup1[7] = "SP,1236";
-
-volatile uint32_t flags;
-
 void USART2_IRQHandler(void)
 {
 	while(LL_USART_IsActiveFlag_RXNE(USART2))
@@ -293,6 +289,7 @@ void USART2_IRQHandler(void)
 
 				if(USART_RN52_RX_Ptr == 6) //Q status
 				{
+					LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_1);
 					if(USART_RN52_RX_buffer[3] >= 48 && USART_RN52_RX_buffer[3] <= 57) // if number 0-9
 					{
 						USART_RN52_RX_buffer[3] -= 48; // set to range 0-9
@@ -335,31 +332,32 @@ void USART2_IRQHandler(void)
 							RN52_Artist[i-7] = USART_RN52_RX_buffer[i];
 						}
 
-						/*uint8_t DestPtr=0;
+						uint8_t DestPtr=0;
 						uint8_t SrcPtr=0;
 
-						while(RN52_Artist[SrcPtr] != '\n' || SrcPtr > 81)
+						while(RN52_Title[SrcPtr] != '\r' && SrcPtr < 50)
 						{
-							CAN_AFFA_Text[DestPtr] = RN52_Artist[SrcPtr];
+							CAN_AFFA_SongName[DestPtr] = RN52_Title[SrcPtr];
 							DestPtr++;
 							SrcPtr++;
 						}
 
-						CAN_AFFA_Text[DestPtr] = ' '; DestPtr++;
-						CAN_AFFA_Text[DestPtr] = '-'; DestPtr++;
-						CAN_AFFA_Text[DestPtr] = ' '; DestPtr++;
+						CAN_AFFA_SongName[DestPtr] = ' '; DestPtr++;
+						CAN_AFFA_SongName[DestPtr] = '-'; DestPtr++;
+						CAN_AFFA_SongName[DestPtr] = ' '; DestPtr++;
 
 						SrcPtr = 0;
 
-						while(RN52_Title[SrcPtr] != '\n' || SrcPtr > 81)
+						while(RN52_Artist[SrcPtr] != '\r' && SrcPtr < 50)
 						{
-							CAN_AFFA_Text[DestPtr] = RN52_Artist[SrcPtr];
+							CAN_AFFA_SongName[DestPtr] = RN52_Artist[SrcPtr];
 							DestPtr++;
 							SrcPtr++;
 						}
 
-						CAN_AFFA_Text_Lenght = DestPtr+1;*/
+						CAN_AFFA_SongName[DestPtr] = 0;
 
+						CAN_AFFA_Display_Shift = 0;
 						CAN_AFFA_isRefrNeeded = CAN_AFFA_Refresh;
 					}
 				}

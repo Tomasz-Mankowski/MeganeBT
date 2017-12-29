@@ -54,11 +54,17 @@ int main(void)
 	CAN_AFFA_isRefrNeeded = CAN_AFFA_Keep;
 	CAN_Sync = CAN_NotSynced;
 
-	CAN_AFFA_Text_Lenght = 9;
-	CAN_AFFA_Text[0] = 'T';
-	CAN_AFFA_Text[1] = 'e';
-	CAN_AFFA_Text[2] = 's';
-	CAN_AFFA_Text[3] = 't';
+	CAN_AFFA_SongName[0] = 'N';
+	CAN_AFFA_SongName[1] = '/';
+	CAN_AFFA_SongName[2] = 'A';
+	CAN_AFFA_SongName[3] = ' ';
+	CAN_AFFA_SongName[4] = '-';
+	CAN_AFFA_SongName[5] = ' ';
+	CAN_AFFA_SongName[6] = 'N';
+	CAN_AFFA_SongName[7] = '/';
+	CAN_AFFA_SongName[8] = 'A';
+
+	CAN_AFFA_Display_Shift = 0;
 
 	SystemClock_Config();
 
@@ -102,7 +108,7 @@ int main(void)
 
 			case RECEIVED_PLAY:
 				LL_TIM_DisableCounter(TIM3);
-				if(RN52_State == RN52_State_Paused)
+				if(RN52_State == RN52_State_Paused) //Something wrong with RN52_State ??
 				{
 					RN52_SilentTime = 2;
 					RN52_State = RN52_State_Playing;
@@ -120,6 +126,7 @@ int main(void)
 					RN52_State = RN52_State_Paused;
 					USART_RN52_Send(RN52_PlayPause, 2);
 				}
+
 				USART_CDC_SendPacket(CDC_Payload_ConfirmPause, 2, 1);
 				CDC_CurrentState = OPERATE_PAUSED;
 				break;
@@ -131,7 +138,6 @@ int main(void)
 				break;
 
 			case RECEIVED_NEXT:
-				//AFFA_DisplayText("HELLO!", "HELLO!12");
 				LL_TIM_DisableCounter(TIM3);
 				USART_RN52_Send(RN52_NextTrack, 3);
 				CDC_CurrentState = OPERATE_PREPARE_PLAY;

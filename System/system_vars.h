@@ -96,7 +96,7 @@ volatile CAN_AFFA_State_TypeDef CAN_AFFA_State;
 volatile CAN_AFFA_isRefrNeeded_Typedef CAN_AFFA_isRefrNeeded;
 volatile CAN_Sync_Typedef CAN_Sync;
 
-volatile uint8_t CAN_AFFA_Text[165];
-volatile uint8_t CAN_AFFA_Text_Lenght;
+volatile uint8_t CAN_AFFA_SongName[104];
+volatile uint8_t CAN_AFFA_Display_Shift;
 
 #endif /* SYSTEM_VARS_H_ */
