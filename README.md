@@ -7,4 +7,5 @@ To see MeganeBT in action click below
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/umTDwlf43LI/0.jpg)](https://www.youtube.com/watch?v=umTDwlf43LI)
 
 ### Photos
-You can find the circuit photos in "images" folder of this repo.
+![alt text](images/MeganeBT_Top.JPG)
+![alt text](images/MeganeBT_Bottom.JPG)
