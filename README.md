@@ -13,6 +13,9 @@ TBD
 ### PCB Schematics
 PCB schematics can be found in PCBSch folder of this repo. Schematics include additional elements, like standard audio analog output or mic input, that are not mandatory for normal operation or were not implemented.
 
+### Tools
+Above project is prepared for OpenSTM32 STM_WorkBench toolchain. ST-Link is required to programm the uC.
+
 ### YouTube Video
 To see MeganeBT in action click below
 
