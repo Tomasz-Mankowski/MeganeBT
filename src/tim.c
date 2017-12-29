@@ -140,19 +140,22 @@ void TIM14_IRQHandler()
 {
 	if(LL_TIM_IsActiveFlag_UPDATE(TIM14))
 	{
-		if(RN52_State == RN52_State_Paused)
-		{
-			LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_0);
-		}else
-		{
-			LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_0);
-		}
-
 		CAN_AFFA_DisplayShiftTimer++;
 		if(CAN_AFFA_DisplayShiftTimer > CAN_AFFA_DisplayShift_ARR)
 		{
 			CAN_AFFA_DisplayShiftTimer = 0;
-			CAN_AFFA_Display_Shift++;
+			if(CAN_AFFA_SongName_Length <= 12)
+			{
+				CAN_AFFA_Display_Shift = 0;
+			}else
+			{
+				CAN_AFFA_Display_Shift++;
+				if((CAN_AFFA_SongName_Length - 11) - CAN_AFFA_Display_Shift <= 0)
+				{
+					CAN_AFFA_Display_Shift = 0;
+				}
+			}
+
 			CAN_AFFA_isRefrNeeded = CAN_AFFA_Refresh;
 		}
 

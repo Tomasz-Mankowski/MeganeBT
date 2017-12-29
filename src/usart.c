@@ -289,7 +289,6 @@ void USART2_IRQHandler(void)
 
 				if(USART_RN52_RX_Ptr == 6) //Q status
 				{
-					LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_1);
 					if(USART_RN52_RX_buffer[3] >= 48 && USART_RN52_RX_buffer[3] <= 57) // if number 0-9
 					{
 						USART_RN52_RX_buffer[3] -= 48; // set to range 0-9
@@ -337,7 +336,13 @@ void USART2_IRQHandler(void)
 
 						while(RN52_Title[SrcPtr] != '\r' && SrcPtr < 50)
 						{
-							CAN_AFFA_SongName[DestPtr] = RN52_Title[SrcPtr];
+							if(RN52_Title[SrcPtr] >= ' ' && RN52_Title[SrcPtr] <= '~')
+							{
+								CAN_AFFA_SongName[DestPtr] = RN52_Title[SrcPtr];
+							}else
+							{
+								CAN_AFFA_SongName[DestPtr] = '_';
+							}
 							DestPtr++;
 							SrcPtr++;
 						}
@@ -350,12 +355,18 @@ void USART2_IRQHandler(void)
 
 						while(RN52_Artist[SrcPtr] != '\r' && SrcPtr < 50)
 						{
-							CAN_AFFA_SongName[DestPtr] = RN52_Artist[SrcPtr];
+							if(RN52_Artist[SrcPtr] >= ' ' && RN52_Artist[SrcPtr] <= '~')
+							{
+								CAN_AFFA_SongName[DestPtr] = RN52_Artist[SrcPtr];
+							}else
+							{
+								CAN_AFFA_SongName[DestPtr] = '_';
+							}
 							DestPtr++;
 							SrcPtr++;
 						}
 
-						CAN_AFFA_SongName[DestPtr] = 0;
+						CAN_AFFA_SongName_Length = DestPtr;
 
 						CAN_AFFA_Display_Shift = 0;
 						CAN_AFFA_isRefrNeeded = CAN_AFFA_Refresh;

@@ -63,7 +63,7 @@ int main(void)
 	CAN_AFFA_SongName[6] = 'N';
 	CAN_AFFA_SongName[7] = '/';
 	CAN_AFFA_SongName[8] = 'A';
-
+	CAN_AFFA_SongName_Length = 9;
 	CAN_AFFA_Display_Shift = 0;
 
 	SystemClock_Config();
