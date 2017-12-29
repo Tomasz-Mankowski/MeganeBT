@@ -133,8 +133,8 @@ void TIM3_IRQHandler()
 	}
 }
 
-//#define CAN_AFFA_DisplayShift_ARR					50
-//static volatile uint16_t CAN_AFFA_DisplayShiftTimer = 0;
+#define CAN_AFFA_DisplayShift_ARR					50
+static volatile uint16_t CAN_AFFA_DisplayShiftTimer = 0;
 
 void TIM14_IRQHandler()
 {
@@ -148,13 +148,13 @@ void TIM14_IRQHandler()
 			LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_0);
 		}
 
-		/*CAN_AFFA_DisplayShiftTimer++;
+		CAN_AFFA_DisplayShiftTimer++;
 		if(CAN_AFFA_DisplayShiftTimer > CAN_AFFA_DisplayShift_ARR)
 		{
 			CAN_AFFA_DisplayShiftTimer = 0;
 			CAN_AFFA_Display_Shift++;
 			CAN_AFFA_isRefrNeeded = CAN_AFFA_Refresh;
-		}*/
+		}
 
 		if(CAN_AFFA_State == CAN_AFFA_Enabled && CAN_Sync == CAN_Synced)
 		{
