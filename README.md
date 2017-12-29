@@ -7,8 +7,8 @@ MeganeBT is an CD Changer hardware emulator for Renault UpdateList Radio with Bl
 ### Important
 Work still in progress. Minor bugs may occur, especially with track information display. More extensive testing is required.
 
-### Connection diagram
-TBD
+### Wiring diagram
+![alt text](images/MeganeBT_Wiring.png)
 
 ### PCB Schematics
 PCB schematics can be found in PCBSch folder: https://github.com/Tomasz-Mankowski/MeganeBT/blob/master/PCBSch/MeganeBT_PCBSch.pdf. Schematics include additional elements, like standard audio analog output or mic input, that are not mandatory for normal operation or were not implemented.
