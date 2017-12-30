@@ -79,6 +79,8 @@ int main(void)
 
 	LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5);//RN52 CMD mode
 
+	uint8_t con1, con2, con3, con4;
+
 	while(1)
 	{
 		switch(CDC_CurrentState)
@@ -91,11 +93,19 @@ int main(void)
 				break;
 
 			case BOOT_SEQUENCE:
-				USART_CDC_SendPacket(CDC_Payload_BootSequence_1, 3, 1);
-				USART_CDC_SendPacket(CDC_Payload_BootSequence_2, 6, 1);
-				USART_CDC_SendPacket(CDC_Payload_BootSequence_3, 2, 1);
-				USART_CDC_SendPacket(CDC_Payload_BootSequence_4, 5, 1);
-				CDC_CurrentState = WAIT_HU_VERSION;
+				con1 = USART_CDC_SendPacket(CDC_Payload_BootSequence_1, 3, 1);
+				con2 = USART_CDC_SendPacket(CDC_Payload_BootSequence_2, 6, 1);
+				con3 = USART_CDC_SendPacket(CDC_Payload_BootSequence_3, 2, 1);
+				con4 = USART_CDC_SendPacket(CDC_Payload_BootSequence_4, 5, 1);
+				if(con1 && con2 && con3 && con4)
+				{
+					CDC_CurrentState = WAIT_HU_VERSION;
+				}else
+				{
+					USART_CDC_SendSequence = 0;
+					CDC_CurrentState = WAIT_BOOT;
+				}
+
 				break;
 
 			case WAIT_HU_VERSION:
